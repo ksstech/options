@@ -91,7 +91,7 @@ int xOptionSet(int ON, int OV) {
 	const char * pcMess;
 	if (ON < ioBXlast) {			// determine the max option value, based on size, and check validity
 		int EVL = (ON < ioB2_0) ? 1 : (ON < ioB3_0) ? 3 : (ON < ioB4_0) ? 7 : (ON < ioB8_0) ? 15 : 255;
-		#if (appAEP > 0)
+		#if (cmakeAEP > 0)
 		if (ON == ioMQTT_QoS && OUTSIDE(0, OV, 2)) {	// exception MQTT QoS levels 0->2 allowed
 			pcMess = "MQTT QoS 0->2";
 			iRV = erINV_VALUE;
