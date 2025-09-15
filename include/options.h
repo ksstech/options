@@ -8,7 +8,7 @@
 
 #include "../private/options_enum.h"				// default enumerated 1/2/3/4/8 bit option numbers
 
-#if _HEADER_EXISTS("app_options.h")					// if application options header exists, include it	
+#if __has_include("app_options.h")					// if application options header exists, include it	
 	#include "app_options.h"						// to define application specific option values & names
 #else
 	#warning "Application options not used !!!"
@@ -23,7 +23,7 @@ extern "C" {
 
 // ###################################### Special Macros ###########################################
 
-#if _HEADER_EXISTS("app_options.h")
+#if __has_include("app_options.h")
 	#define appOPTIONS		1
 	#define OPT_GET(opt)	xOptionGet(opt)
 #else
