@@ -11,7 +11,7 @@
 #if __has_include("app_options.h")					// if application options header exists, include it	
 	#include "app_options.h"						// to define application specific option values & names
 #else
-	#warning "Application options not used !!!"
+	#warning "Application options not used..."
 #endif
 
 #include "../private/options_val.h"					// set defaults for undefined option values
