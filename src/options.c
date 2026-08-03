@@ -38,7 +38,12 @@ int (* pfAppHandler)(int, int);
 
 // ####################################### Private functions #######################################
 
-static int xOptionSetupRange(int ON, u64_t ** ppU64, int * piBase, int * piWidth) {
+/* IRAM: xOptionGet() is reached from ESP_INTR_FLAG_IRAM ISR context via OPT_GET() - see
+ * hal_gpio.c halGPIO_IntHandler/halGPIO_TickHook. It must therefore execute with the flash cache
+ * disabled. It reads only sNVSvars (DRAM, 0x3ffb0238) and this one static helper, so IRAM_ATTR on
+ * the pair is sufficient - no strings, no further calls. The SETTERS stay in flash: they write NVS,
+ * which cannot happen from that context anyway. */
+static int IRAM_ATTR xOptionSetupRange(int ON, u64_t ** ppU64, int * piBase, int * piWidth) {
 	if (ON < ioB2_0) {
 		*ppU64 = &sNVSvars.ioBX.ioB1;
 		*piBase = ioB1_0;
@@ -135,7 +140,7 @@ int	xOptionSetPersist(int ON, int OV, int PF) {
 
 // ########################################## GET support ##########################################
 
-int xOptionGet(int ON) {
+int IRAM_ATTR xOptionGet(int ON) {
 	int Base, Width;
 	u64_t * pU64;
 	int iRV = xOptionSetupRange(ON, &pU64, &Base, &Width);
