@@ -119,10 +119,8 @@ int xOptionSet(int ON, int OV) {
 			IF_myASSERT(debugTRACK, 0);
 		}
 		// if iRV=1 (something changed) trigger special handler if specified
-		#ifdef xAppOptionsHandler
 		if (iRV == 1 && pfAppHandler)
 			iRV = xAppOptionsHandler(ON,OV);
-		#endif
 	} else {
 		SL_ERR("ON=%d OV=%d %s (%ld)", ON, OV, pcMess, iRV);
 	}
