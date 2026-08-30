@@ -8,11 +8,9 @@
 
 #include "../private/options_enum.h"				// default enumerated 1/2/3/4/8 bit option numbers
 
-#if __has_include("app_options.h")					// if application options header exists, include it	
+#if __has_include("app_options.h")					// if application options header exists, include it
 	#include "app_options.h"						// to define application specific option values & names
-#else
-	#warning "Application options not used..."
-#endif
+#endif												// absent = appOPTIONS 0, a supported configuration
 
 #include "../private/options_val.h"					// set defaults for undefined option values
 #include "../private/options_mes.h"					// set defaults for undefined option names
