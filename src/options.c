@@ -28,7 +28,9 @@
 
 ioset_t const ioDefaults = { iosetDEFAULTS };
 const char ioBXmes[] = iosetHELP_MESSAGE;
+#if (optFULL)
 const char ioSXmes[] = iosetSX_MESSAGE;
+#endif
 
 // ###################################### Private variables ########################################
 
@@ -40,34 +42,57 @@ int (* pfAppHandler)(int, int);
 
 /* IRAM: xOptionGet() is reached from ESP_INTR_FLAG_IRAM ISR context via OPT_GET() - see
  * hal_gpio.c halGPIO_IntHandler/halGPIO_TickHook. It must therefore execute with the flash cache
- * disabled. It reads only sNVSvars (DRAM, 0x3ffb0238) and this one static helper, so IRAM_ATTR on
- * the pair is sufficient - no strings, no further calls. The SETTERS stay in flash: they write NVS,
- * which cannot happen from that context anyway. */
-static int IRAM_ATTR xOptionSetupRange(int ON, u64_t ** ppU64, int * piBase, int * piWidth) {
-	if (ON < ioB2_0) {
-		*ppU64 = &sNVSvars.ioBX.ioB1;
-		*piBase = ioB1_0;
-		*piWidth = 1;
-	} else if (ON < ioB3_0) {
-		*ppU64 = &sNVSvars.ioBX.ioB2;
-		*piBase = ioB2_0;
-		*piWidth = 2;
-	} else if (ON < ioB4_0) {
-		*ppU64 = &sNVSvars.ioBX.ioB3;
-		*piBase = ioB3_0;
-		*piWidth = 3;
-	} else if (ON < ioB8_0) {
-		*ppU64 = &sNVSvars.ioBX.ioB4;
-		*piBase = ioB4_0;
-		*piWidth = 4;
-	} else if (ON < ioBXlast) {
-		*ppU64 = &sNVSvars.ioBX.ioB8;
-		*piBase = ioB8_0;
-		*piWidth = 8;
-	} else {
-		return erFAILURE;			/* invalid ON */
+ * disabled. It reads only sNVSvars (DRAM) and these static helpers, so IRAM_ATTR on them is
+ * sufficient - no strings, no further calls (byte loops, not memcpy). The SETTERS stay in flash:
+ * they write NVS, which cannot happen from that context anyway.
+ * Storage (struct_union.h ioset_t): one little-endian byte array per width, sized by options_size.h;
+ * option n of width w occupies bits n*w .. n*w+w-1 of the width's array, as with the former u64_t. */
+typedef struct opt_range_t { u8_t * pU8; int Bytes, Base, Width; } opt_range_t;
+
+static int IRAM_ATTR xOptionSetupRange(const ioset_t * psIO, int ON, opt_range_t * psR) {
+	u8_t * pBase = (u8_t *) psIO;						// widths follow each other in ioset_t (packed)
+	#if (optB1_BYTES > 0)
+	if (ON >= ioB1_BASE && ON < ioB2_BASE) { *psR = (opt_range_t) { pBase, optB1_BYTES, ioB1_BASE, 1 }; return erSUCCESS; }
+	#endif
+	pBase += optB1_BYTES;
+	#if (optB2_BYTES > 0)
+	if (ON >= ioB2_BASE && ON < ioB3_BASE) { *psR = (opt_range_t) { pBase, optB2_BYTES, ioB2_BASE, 2 }; return erSUCCESS; }
+	#endif
+	pBase += optB2_BYTES;
+	#if (optB3_BYTES > 0)
+	if (ON >= ioB3_BASE && ON < ioB4_BASE) { *psR = (opt_range_t) { pBase, optB3_BYTES, ioB3_BASE, 3 }; return erSUCCESS; }
+	#endif
+	pBase += optB3_BYTES;
+	#if (optB4_BYTES > 0)
+	if (ON >= ioB4_BASE && ON < ioB8_BASE) { *psR = (opt_range_t) { pBase, optB4_BYTES, ioB4_BASE, 4 }; return erSUCCESS; }
+	#endif
+	pBase += optB4_BYTES;
+	#if (optB8_BYTES > 0)
+	if (ON >= ioB8_BASE && ON < ioBXlast) { *psR = (opt_range_t) { pBase, optB8_BYTES, ioB8_BASE, 8 }; return erSUCCESS; }
+	#endif
+	return erFAILURE;									/* invalid ON */
+}
+
+static u64_t IRAM_ATTR xOptionLoad(const opt_range_t * psR) {	// little-endian bytes -> u64_t
+	u64_t Val = 0;
+	for (int i = psR->Bytes - 1; i >= 0; --i)
+		Val = (Val << 8) | psR->pU8[i];
+	return Val;
+}
+
+static void xOptionStore(const opt_range_t * psR, u64_t Val) {	// u64_t -> little-endian bytes
+	for (int i = 0; i < psR->Bytes; ++i) {
+		psR->pU8[i] = (u8_t) Val;
+		Val >>= 8;
 	}
-	return erSUCCESS;
+}
+
+static int IRAM_ATTR xOptionRead(const ioset_t * psIO, int ON) {
+	opt_range_t sR;
+	if (xOptionSetupRange(psIO, ON, &sR) < erSUCCESS)
+		return erFAILURE;
+	int Shift = (ON - sR.Base) * sR.Width;
+	return (int) ((xOptionLoad(&sR) >> Shift) & BIT_MASK64(0, sR.Width - 1));
 }
 
 static void xOptionsSetDefaults(void) { memcpy(&sNVSvars.ioBX, &ioDefaults, sizeof(ioset_t)); }
@@ -75,27 +100,24 @@ static void xOptionsSetDefaults(void) { memcpy(&sNVSvars.ioBX, &ioDefaults, size
 // ########################################## SET support ##########################################
 
 void vOptionSet(int ON, int OV) {
-	int Base, Width;
-	u64_t * pU64;
-	int iRV = xOptionSetupRange(ON, &pU64, &Base, &Width);
-	if (iRV < erSUCCESS)
-		return;						/* invalid ON */
-	// range parameters configured, calculate & make changes
-	int Shift = (ON - Base) * Width;
-	u64_t Mask = BIT_MASK64(Shift, Shift + Width - 1);
-	IF_RP(debugSETTERS, "ON=%d  OV=%d  B=%d  W=%d  S=%d ", ON, OV, Base, Width, Shift);
-	IF_RP(debugSETTERS, " M=x%lX%lX  Val=x%lX%lX", MSWofU64(Mask), LSWofU64(Mask), MSWofU64(*pU64), LSWofU64(*pU64));
-	*pU64 &= ~Mask;										// remove old bit value
-	IF_RP(debugSETTERS, " -> x%lX%lX", MSWofU64(*pU64), LSWofU64(*pU64));
-	*pU64 |= ((u64_t)OV << Shift) & Mask;				// insert new bit value
-	IF_RP(debugSETTERS, " -> x%lX%lX" strNL, MSWofU64(*pU64), LSWofU64(*pU64));
+	opt_range_t sR;
+	if (xOptionSetupRange(&sNVSvars.ioBX, ON, &sR) < erSUCCESS)
+		return;											/* invalid ON */
+	int Shift = (ON - sR.Base) * sR.Width;
+	u64_t Mask = BIT_MASK64(Shift, Shift + sR.Width - 1);
+	u64_t Val = xOptionLoad(&sR);
+	IF_RP(debugSETTERS, "ON=%d  OV=%d  B=%d  W=%d  S=%d  Val=x%lX%lX", ON, OV, sR.Base, sR.Width, Shift, MSWofU64(Val), LSWofU64(Val));
+	Val &= ~Mask;										// remove old bit value
+	Val |= ((u64_t)OV << Shift) & Mask;					// insert new bit value
+	IF_RP(debugSETTERS, " -> x%lX%lX" strNL, MSWofU64(Val), LSWofU64(Val));
+	xOptionStore(&sR, Val);
 }
 
 int xOptionSet(int ON, int OV) {
 	int iRV = 1;
 	const char * pcMess;
 	if (ON < ioBXlast) {			// determine the max option value, based on size, and check validity
-		int EVL = (ON < ioB2_0) ? 1 : (ON < ioB3_0) ? 3 : (ON < ioB4_0) ? 7 : (ON < ioB8_0) ? 15 : 255;
+		int EVL = (ON < ioB2_BASE) ? 1 : (ON < ioB3_BASE) ? 3 : (ON < ioB4_BASE) ? 7 : (ON < ioB8_BASE) ? 15 : 255;
 		#if (cmakeAEP > 0)
 		if (ON == ioMQTT_QoS && OUTSIDE(0, OV, 2)) {	// exception MQTT QoS levels 0->2 allowed
 			pcMess = "MQTT QoS 0->2";
@@ -139,68 +161,30 @@ int	xOptionSetPersist(int ON, int OV, int PF) {
 // ########################################## GET support ##########################################
 
 int IRAM_ATTR xOptionGet(int ON) {
-	int Base, Width;
-	u64_t * pU64;
-	int iRV = xOptionSetupRange(ON, &pU64, &Base, &Width);
-	if (iRV < erSUCCESS)
-		return iRV;
-	int Shift = (ON - Base) * Width;
-	u64_t Mask = BIT_MASK64(0, Width - 1);
-	u64_t Val = *pU64;
-	IF_RP(debugGETTERS, "ON=%d  B=%d  W=%d  S=%d", ON, Base, Width, Shift);
-	IF_RP(debugGETTERS, " M=x%08lX%08lX  Val=x%08lX%08lX", MSWofU64(Mask), LSWofU64(Mask), MSWofU64(Val), LSWofU64(Val));
-	Val >>= Shift;
-	IF_RP(debugGETTERS, " -> x%08lX%08lX", MSWofU64(Val), LSWofU64(Val));
-	Val &= Mask;
-	IF_RP(debugGETTERS, " -> x%08lX%08lX (%d)" strNL, MSWofU64(Val), LSWofU64(Val), (int) Val);
-	return (int) Val;
+	int iRV = xOptionRead(&sNVSvars.ioBX, ON);
+	IF_RP(debugGETTERS, "ON=%d -> %d" strNL, ON, iRV);
+	return iRV;
 }
 
-int xOptionGetDefault(int ON) {
-	return (ON >= ioBXlast) ? erFAILURE :
-			(ON >= ioB8_0) ? maskGET8B(ioDefaults.ioB8, (ON - ioB8_0), u64_t) :
-			(ON >= ioB4_0) ? maskGET4B(ioDefaults.ioB4, (ON - ioB4_0), u64_t) :
-			(ON >= ioB3_0) ? maskGET3B(ioDefaults.ioB3, (ON - ioB3_0), u64_t) :
-			(ON >= ioB2_0) ? maskGET2B(ioDefaults.ioB2, (ON - ioB2_0), u64_t) :
-							maskGET1B(ioDefaults.ioB1, (ON - ioB1_0), u64_t);
-}
+int xOptionGetDefault(int ON) { return xOptionRead(&ioDefaults, ON); }
 
 // #################################### Option status reporting ####################################
 
 void vOptionsShow(report_t * psR) {
 	const char * pcMess = ioBXmes;
 	int Cur, Def, Col, Len, Idx = 0;
-	const char * pcForm;
-	u64_t u64Val;
-	for (int Num = ioB1_0; Num < ioBXlast; ++Num) {
-		if (Num == ioB1_0) {
-			pcForm = "1";
-			u64Val = sNVSvars.ioBX.ioB1;
+	for (int Num = ioB1_BASE; Num < ioBXlast; ++Num) {
+		const char * pcForm = (Num == ioB1_BASE) ? "1" : (Num == ioB2_BASE) ? "2" : (Num == ioB3_BASE) ? "3" :
+							(Num == ioB4_BASE) ? strNL "4" : (Num == ioB8_BASE) ? "8" : NULL;
+		if (pcForm) {									// first option of a width: header with the raw bytes
+			opt_range_t sR;
+			xOptionSetupRange(&sNVSvars.ioBX, Num, &sR);
+			xReport(psR, "%C%s-Bit options:%C x%0llX" strNL, xpfCOL(colourFG_CYAN,0), pcForm, xpfCOL(attrRESET,0), xOptionLoad(&sR));
 			Idx = 0;
-		} else if (Num == ioB2_0) {
-			pcForm = "2";
-			u64Val = sNVSvars.ioBX.ioB2;
-			Idx = 0;
-		} else if (Num == ioB3_0) {
-			pcForm = "3";
-			u64Val = sNVSvars.ioBX.ioB3;
-			Idx = 0;
-		} else if (Num == ioB4_0) {
-			pcForm = strNL "4";
-			u64Val = sNVSvars.ioBX.ioB4;
-			Idx = 0;
-		} else if (Num == ioB8_0) {
-			pcForm = "8";
-			u64Val = sNVSvars.ioBX.ioB8;
-			Idx = 0;
-		} else {
-			pcForm = NULL;
 		}
 		Cur = xOptionGet(Num);
 		Def = xOptionGetDefault(Num);
 		Col = (Cur == Def) ? xpfCOL(attrRESET,0) : xpfCOL(colourFG_RED,0);
-		if (pcForm)
-			xReport(psR, "%C%s-Bit options:%C x%0llX" strNL, xpfCOL(colourFG_CYAN,0), pcForm, xpfCOL(attrRESET,0), u64Val);
 		xReport(psR, "%3d=%C%X %s%C", Num, Col, Cur, pcMess, xpfCOL(attrRESET,0));
 		Len = strlen(pcMess);
 		if (Idx == 7) {
@@ -211,8 +195,13 @@ void vOptionsShow(report_t * psR) {
 			++Idx;
 		}
 		pcMess += Len + 1;			// adjust message pointer for message length and terminating NUL
-	}		// end of Num = ioB8_7
+	}
+	#if (optFULL)
 	xReport(psR, "%CNon-bit options:%C" strNL "%s", xpfSGR(0,0,colourFG_CYAN,0), xpfSGR(0,0,attrRESET,0), ioSXmes);
+	#else							// reduced sizing: the numbers move, ioSXmes (141..146) does not apply
+	xReport(psR, "%CNon-bit options:%C" strNL "%d=NWmode\t%d=NWcred\t%d=MQhost\t%d=Peek\t%d=Poke\t%d=IOrset" strNLx2,
+		xpfSGR(0,0,colourFG_CYAN,0), xpfSGR(0,0,attrRESET,0), ioS_NWMO, ioS_WIFI, ioS_MQTT, ioS_PEEK, ioS_POKE, ioS_IOdef);
+	#endif
 }
 
 #endif

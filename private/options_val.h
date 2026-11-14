@@ -1,4 +1,4 @@
-// hal_options_val.h
+// options_val.h - default option values (application valBx_n, else 0), sized per common/include/options_size.h
 
 #pragma once
 
@@ -570,311 +570,96 @@ extern "C" {
 	#define valB8_7		0
 #endif
 
-// Combine application/preset and default option values into single build default values
+// Combine application/preset and default option values into one little-endian u64_t per width: option n of a
+// width w at bit n * w (the bit positions options.c uses), masked to w bits as the former bit-fields truncated. Values of options outside the configured count fall
+// outside the stored bytes and are dropped.
+#define optDEF_B1	( \
+	(((u64_t)(valB1_0) & 0x1) << 0) | (((u64_t)(valB1_1) & 0x1) << 1) | (((u64_t)(valB1_2) & 0x1) << 2) | (((u64_t)(valB1_3) & 0x1) << 3) | \
+	(((u64_t)(valB1_4) & 0x1) << 4) | (((u64_t)(valB1_5) & 0x1) << 5) | (((u64_t)(valB1_6) & 0x1) << 6) | (((u64_t)(valB1_7) & 0x1) << 7) | \
+	(((u64_t)(valB1_8) & 0x1) << 8) | (((u64_t)(valB1_9) & 0x1) << 9) | (((u64_t)(valB1_10) & 0x1) << 10) | (((u64_t)(valB1_11) & 0x1) << 11) | \
+	(((u64_t)(valB1_12) & 0x1) << 12) | (((u64_t)(valB1_13) & 0x1) << 13) | (((u64_t)(valB1_14) & 0x1) << 14) | (((u64_t)(valB1_15) & 0x1) << 15) | \
+	(((u64_t)(valB1_16) & 0x1) << 16) | (((u64_t)(valB1_17) & 0x1) << 17) | (((u64_t)(valB1_18) & 0x1) << 18) | (((u64_t)(valB1_19) & 0x1) << 19) | \
+	(((u64_t)(valB1_20) & 0x1) << 20) | (((u64_t)(valB1_21) & 0x1) << 21) | (((u64_t)(valB1_22) & 0x1) << 22) | (((u64_t)(valB1_23) & 0x1) << 23) | \
+	(((u64_t)(valB1_24) & 0x1) << 24) | (((u64_t)(valB1_25) & 0x1) << 25) | (((u64_t)(valB1_26) & 0x1) << 26) | (((u64_t)(valB1_27) & 0x1) << 27) | \
+	(((u64_t)(valB1_28) & 0x1) << 28) | (((u64_t)(valB1_29) & 0x1) << 29) | (((u64_t)(valB1_30) & 0x1) << 30) | (((u64_t)(valB1_31) & 0x1) << 31) | \
+	(((u64_t)(valB1_32) & 0x1) << 32) | (((u64_t)(valB1_33) & 0x1) << 33) | (((u64_t)(valB1_34) & 0x1) << 34) | (((u64_t)(valB1_35) & 0x1) << 35) | \
+	(((u64_t)(valB1_36) & 0x1) << 36) | (((u64_t)(valB1_37) & 0x1) << 37) | (((u64_t)(valB1_38) & 0x1) << 38) | (((u64_t)(valB1_39) & 0x1) << 39) | \
+	(((u64_t)(valB1_40) & 0x1) << 40) | (((u64_t)(valB1_41) & 0x1) << 41) | (((u64_t)(valB1_42) & 0x1) << 42) | (((u64_t)(valB1_43) & 0x1) << 43) | \
+	(((u64_t)(valB1_44) & 0x1) << 44) | (((u64_t)(valB1_45) & 0x1) << 45) | (((u64_t)(valB1_46) & 0x1) << 46) | (((u64_t)(valB1_47) & 0x1) << 47) | \
+	(((u64_t)(valB1_48) & 0x1) << 48) | (((u64_t)(valB1_49) & 0x1) << 49) | (((u64_t)(valB1_50) & 0x1) << 50) | (((u64_t)(valB1_51) & 0x1) << 51) | \
+	(((u64_t)(valB1_52) & 0x1) << 52) | (((u64_t)(valB1_53) & 0x1) << 53) | (((u64_t)(valB1_54) & 0x1) << 54) | (((u64_t)(valB1_55) & 0x1) << 55) | \
+	(((u64_t)(valB1_56) & 0x1) << 56) | (((u64_t)(valB1_57) & 0x1) << 57) | (((u64_t)(valB1_58) & 0x1) << 58) | (((u64_t)(valB1_59) & 0x1) << 59) | \
+	(((u64_t)(valB1_60) & 0x1) << 60) | (((u64_t)(valB1_61) & 0x1) << 61) | (((u64_t)(valB1_62) & 0x1) << 62) | (((u64_t)(valB1_63) & 0x1) << 63) )
 
-#define ioB1X			/* 1-bit */	\
-	.B1_0	= valB1_0,	/* 0 */		\
-	.B1_1	= valB1_1,				\
-	.B1_2	= valB1_2,				\
-	.B1_3	= valB1_3,				\
-	.B1_4	= valB1_4,				\
-	.B1_5	= valB1_5,				\
-	.B1_6	= valB1_6,				\
-	.B1_7	= valB1_7,				\
-	.B1_8	= valB1_8,				\
-	.B1_9	= valB1_9,				\
-	.B1_10	= valB1_10,				\
-	.B1_11	= valB1_11,				\
-	.B1_12	= valB1_12,				\
-	.B1_13	= valB1_13,				\
-	.B1_14	= valB1_14,				\
-	.B1_15	= valB1_15,				\
-	.B1_16	= valB1_16,				\
-	.B1_17	= valB1_17,				\
-	.B1_18	= valB1_18,				\
-	.B1_19	= valB1_19,				\
-	.B1_20	= valB1_20,				\
-	.B1_21	= valB1_21,				\
-	.B1_22	= valB1_22,				\
-	.B1_23	= valB1_23,				\
-	.B1_24	= valB1_24,				\
-	.B1_25	= valB1_25,				\
-	.B1_26	= valB1_26,				\
-	.B1_27	= valB1_27,				\
-	.B1_28	= valB1_28,				\
-	.B1_29	= valB1_29,				\
-	.B1_30	= valB1_30,				\
-	.B1_31	= valB1_31,				\
-	.B1_32	= valB1_32,				\
-	.B1_33	= valB1_33,				\
-	.B1_34	= valB1_34,				\
-	.B1_35	= valB1_35,				\
-	.B1_36	= valB1_36,				\
-	.B1_37	= valB1_37,				\
-	.B1_38	= valB1_38,				\
-	.B1_39	= valB1_39,				\
-	.B1_40	= valB1_40,				\
-	.B1_41	= valB1_41,				\
-	.B1_42	= valB1_42,				\
-	.B1_43	= valB1_43,				\
-	.B1_44	= valB1_44,				\
-	.B1_45	= valB1_45,				\
-	.B1_46	= valB1_46,				\
-	.B1_47	= valB1_47,				\
-	.B1_48	= valB1_48,				\
-	.B1_49	= valB1_49,				\
-	.B1_50	= valB1_50,				\
-	.B1_51	= valB1_51,				\
-	.B1_52	= valB1_52,				\
-	.B1_53	= valB1_53,				\
-	.B1_54	= valB1_54,				\
-	.B1_55	= valB1_55,				\
-	.B1_56	= valB1_56,				\
-	.B1_57	= valB1_57,				\
-	.B1_58	= valB1_58,				\
-	.B1_59	= valB1_59,				\
-	.B1_60	= valB1_60,				\
-	.B1_61	= valB1_61,				\
-	.B1_62	= valB1_62,				\
-	.B1_63	= valB1_63		/* 63 */
+#define optDEF_B2	( \
+	(((u64_t)(valB2_0) & 0x3) << 0) | (((u64_t)(valB2_1) & 0x3) << 2) | (((u64_t)(valB2_2) & 0x3) << 4) | (((u64_t)(valB2_3) & 0x3) << 6) | \
+	(((u64_t)(valB2_4) & 0x3) << 8) | (((u64_t)(valB2_5) & 0x3) << 10) | (((u64_t)(valB2_6) & 0x3) << 12) | (((u64_t)(valB2_7) & 0x3) << 14) | \
+	(((u64_t)(valB2_8) & 0x3) << 16) | (((u64_t)(valB2_9) & 0x3) << 18) | (((u64_t)(valB2_10) & 0x3) << 20) | (((u64_t)(valB2_11) & 0x3) << 22) | \
+	(((u64_t)(valB2_12) & 0x3) << 24) | (((u64_t)(valB2_13) & 0x3) << 26) | (((u64_t)(valB2_14) & 0x3) << 28) | (((u64_t)(valB2_15) & 0x3) << 30) | \
+	(((u64_t)(valB2_16) & 0x3) << 32) | (((u64_t)(valB2_17) & 0x3) << 34) | (((u64_t)(valB2_18) & 0x3) << 36) | (((u64_t)(valB2_19) & 0x3) << 38) | \
+	(((u64_t)(valB2_20) & 0x3) << 40) | (((u64_t)(valB2_21) & 0x3) << 42) | (((u64_t)(valB2_22) & 0x3) << 44) | (((u64_t)(valB2_23) & 0x3) << 46) | \
+	(((u64_t)(valB2_24) & 0x3) << 48) | (((u64_t)(valB2_25) & 0x3) << 50) | (((u64_t)(valB2_26) & 0x3) << 52) | (((u64_t)(valB2_27) & 0x3) << 54) | \
+	(((u64_t)(valB2_28) & 0x3) << 56) | (((u64_t)(valB2_29) & 0x3) << 58) | (((u64_t)(valB2_30) & 0x3) << 60) | (((u64_t)(valB2_31) & 0x3) << 62) )
 
-#define ioB2X			/* 2-bit */	\
-	.B2_0	= valB2_0,	/* 64 */	\
-	.B2_1	= valB2_1,				\
-	.B2_2	= valB2_2,				\
-	.B2_3	= valB2_3,				\
-	.B2_4	= valB2_4,				\
-	.B2_5	= valB2_5,				\
-	.B2_6	= valB2_6,				\
-	.B2_7	= valB2_7,				\
-	.B2_8	= valB2_8,				\
-	.B2_9	= valB2_9,				\
-	.B2_10	= valB2_10,				\
-	.B2_11	= valB2_11,				\
-	.B2_12	= valB2_12,				\
-	.B2_13	= valB2_13,				\
-	.B2_14	= valB2_14,				\
-	.B2_15	= valB2_15,				\
-	.B2_16	= valB2_16,				\
-	.B2_17	= valB2_17,				\
-	.B2_18	= valB2_18,				\
-	.B2_19	= valB2_19,				\
-	.B2_20	= valB2_20,				\
-	.B2_21	= valB2_21,				\
-	.B2_22	= valB2_22,				\
-	.B2_23	= valB2_23,				\
-	.B2_24	= valB2_24,				\
-	.B2_25	= valB2_25,				\
-	.B2_26	= valB2_26,				\
-	.B2_27	= valB2_27,				\
-	.B2_28	= valB2_28,				\
-	.B2_29	= valB2_29,				\
-	.B2_30	= valB2_30,				\
-	.B2_31	= valB2_31	/* 95 */
+#define optDEF_B3	( \
+	(((u64_t)(valB3_0) & 0x7) << 0) | (((u64_t)(valB3_1) & 0x7) << 3) | (((u64_t)(valB3_2) & 0x7) << 6) | (((u64_t)(valB3_3) & 0x7) << 9) | \
+	(((u64_t)(valB3_4) & 0x7) << 12) | (((u64_t)(valB3_5) & 0x7) << 15) | (((u64_t)(valB3_6) & 0x7) << 18) | (((u64_t)(valB3_7) & 0x7) << 21) | \
+	(((u64_t)(valB3_8) & 0x7) << 24) | (((u64_t)(valB3_9) & 0x7) << 27) | (((u64_t)(valB3_10) & 0x7) << 30) | (((u64_t)(valB3_11) & 0x7) << 33) | \
+	(((u64_t)(valB3_12) & 0x7) << 36) | (((u64_t)(valB3_13) & 0x7) << 39) | (((u64_t)(valB3_14) & 0x7) << 42) | (((u64_t)(valB3_15) & 0x7) << 45) | \
+	(((u64_t)(valB3_16) & 0x7) << 48) | (((u64_t)(valB3_17) & 0x7) << 51) | (((u64_t)(valB3_18) & 0x7) << 54) | (((u64_t)(valB3_19) & 0x7) << 57) | \
+	(((u64_t)(valB3_20) & 0x7) << 60) )
 
-#define ioB3X			/* 3-bit */	\
-	.B3_0	= valB3_0,	/* 96 */	\
-	.B3_1	= valB3_1,				\
-	.B3_2	= valB3_2,				\
-	.B3_3	= valB3_3,				\
-	.B3_4	= valB3_4,				\
-	.B3_5	= valB3_5,				\
-	.B3_6	= valB3_6,				\
-	.B3_7	= valB3_7,				\
-	.B3_8	= valB3_8,				\
-	.B3_9	= valB3_9,				\
-	.B3_10	= valB3_10,				\
-	.B3_11	= valB3_11,				\
-	.B3_12	= valB3_12,				\
-	.B3_13	= valB3_13,				\
-	.B3_14	= valB3_14,				\
-	.B3_15	= valB3_15,				\
-	.B3_16	= valB3_16,				\
-	.B3_17	= valB3_17,				\
-	.B3_18	= valB3_18,				\
-	.B3_19	= valB3_19,				\
-	.B3_20	= valB3_20	/* 116 */
+#define optDEF_B4	( \
+	(((u64_t)(valB4_0) & 0xF) << 0) | (((u64_t)(valB4_1) & 0xF) << 4) | (((u64_t)(valB4_2) & 0xF) << 8) | (((u64_t)(valB4_3) & 0xF) << 12) | \
+	(((u64_t)(valB4_4) & 0xF) << 16) | (((u64_t)(valB4_5) & 0xF) << 20) | (((u64_t)(valB4_6) & 0xF) << 24) | (((u64_t)(valB4_7) & 0xF) << 28) | \
+	(((u64_t)(valB4_8) & 0xF) << 32) | (((u64_t)(valB4_9) & 0xF) << 36) | (((u64_t)(valB4_10) & 0xF) << 40) | (((u64_t)(valB4_11) & 0xF) << 44) | \
+	(((u64_t)(valB4_12) & 0xF) << 48) | (((u64_t)(valB4_13) & 0xF) << 52) | (((u64_t)(valB4_14) & 0xF) << 56) | (((u64_t)(valB4_15) & 0xF) << 60) )
 
-#define ioB4X			/* 4-bit */	\
-	.B4_0	= valB4_0,	/* 117 */	\
-	.B4_1	= valB4_1,				\
-	.B4_2	= valB4_2,				\
-	.B4_3	= valB4_3,				\
-	.B4_4	= valB4_4,				\
-	.B4_5	= valB4_5,				\
-	.B4_6	= valB4_6,				\
-	.B4_7	= valB4_7,				\
-	.B4_8	= valB4_8,				\
-	.B4_9	= valB4_9,				\
-	.B4_10	= valB4_10,				\
-	.B4_11	= valB4_11,				\
-	.B4_12	= valB4_12,				\
-	.B4_13	= valB4_13,				\
-	.B4_14	= valB4_14,				\
-	.B4_15	= valB4_15	/* 132 */
+#define optDEF_B8	( \
+	(((u64_t)(valB8_0) & 0xFF) << 0) | (((u64_t)(valB8_1) & 0xFF) << 8) | (((u64_t)(valB8_2) & 0xFF) << 16) | (((u64_t)(valB8_3) & 0xFF) << 24) | \
+	(((u64_t)(valB8_4) & 0xFF) << 32) | (((u64_t)(valB8_5) & 0xFF) << 40) | (((u64_t)(valB8_6) & 0xFF) << 48) | (((u64_t)(valB8_7) & 0xFF) << 56) )
 
-#define ioB8X			/* 8-bit */	\
-	.B8_0	= valB8_0,	/* 133 */	\
-	.B8_1	= valB8_1,				\
-	.B8_2	= valB8_2,				\
-	.B8_3	= valB8_3,				\
-	.B8_4	= valB8_4,				\
-	.B8_5	= valB8_5,				\
-	.B8_6	= valB8_6,				\
-	.B8_7	= valB8_7	/* 140 */			
+// Byte initialisers: optINIT_n(v) gives the n low bytes of v, least significant first (= ioset_t byte order)
+#define	optBYTE(v, i)			((u8_t) (((u64_t) (v)) >> (8 * (i))))
+#define	optINIT_1(v)			optBYTE(v, 0)
+#define	optINIT_2(v)			optINIT_1(v), optBYTE(v, 1)
+#define	optINIT_3(v)			optINIT_2(v), optBYTE(v, 2)
+#define	optINIT_4(v)			optINIT_3(v), optBYTE(v, 3)
+#define	optINIT_5(v)			optINIT_4(v), optBYTE(v, 4)
+#define	optINIT_6(v)			optINIT_5(v), optBYTE(v, 5)
+#define	optINIT_7(v)			optINIT_6(v), optBYTE(v, 6)
+#define	optINIT_8(v)			optINIT_7(v), optBYTE(v, 7)
+#define	optCAT_(a, b)			a##b
+#define	optCAT(a, b)			optCAT_(a, b)
 
-#if 0
-#define iosetDEFAULTS				\
-	.ioB1	= ioB1X,				\
-	.ioB2	= ioB2X,				\
-	.ioB3	= ioB3X,				\
-	.ioB4	= ioB4X,				\
-	.ioB8	= ioB8X
-# else
-
-#define iosetDEFAULTS				\
-	.B1_0	= valB1_0,	/* 1-bit */	\
-	.B1_1	= valB1_1,	/* 1 */		\
-	.B1_2	= valB1_2,				\
-	.B1_3	= valB1_3,				\
-	.B1_4	= valB1_4,				\
-	.B1_5	= valB1_5,				\
-	.B1_6	= valB1_6,				\
-	.B1_7	= valB1_7,				\
-	.B1_8	= valB1_8,				\
-	.B1_9	= valB1_9,				\
-	.B1_10	= valB1_10,				\
-	.B1_11	= valB1_11,				\
-	.B1_12	= valB1_12,				\
-	.B1_13	= valB1_13,				\
-	.B1_14	= valB1_14,				\
-	.B1_15	= valB1_15,				\
-	.B1_16	= valB1_16,				\
-	.B1_17	= valB1_17,				\
-	.B1_18	= valB1_18,				\
-	.B1_19	= valB1_19,				\
-	.B1_20	= valB1_20,				\
-	.B1_21	= valB1_21,				\
-	.B1_22	= valB1_22,				\
-	.B1_23	= valB1_23,				\
-	.B1_24	= valB1_24,				\
-	.B1_25	= valB1_25,				\
-	.B1_26	= valB1_26,				\
-	.B1_27	= valB1_27,				\
-	.B1_28	= valB1_28,				\
-	.B1_29	= valB1_29,				\
-	.B1_30	= valB1_30,				\
-	.B1_31	= valB1_31,				\
-	.B1_32	= valB1_32,				\
-	.B1_33	= valB1_33,				\
-	.B1_34	= valB1_34,				\
-	.B1_35	= valB1_35,				\
-	.B1_36	= valB1_36,				\
-	.B1_37	= valB1_37,				\
-	.B1_38	= valB1_38,				\
-	.B1_39	= valB1_39,				\
-	.B1_40	= valB1_40,				\
-	.B1_41	= valB1_41,				\
-	.B1_42	= valB1_42,				\
-	.B1_43	= valB1_43,				\
-	.B1_44	= valB1_44,				\
-	.B1_45	= valB1_45,				\
-	.B1_46	= valB1_46,				\
-	.B1_47	= valB1_47,				\
-	.B1_48	= valB1_48,				\
-	.B1_49	= valB1_49,				\
-	.B1_50	= valB1_50,				\
-	.B1_51	= valB1_51,				\
-	.B1_52	= valB1_52,				\
-	.B1_53	= valB1_53,				\
-	.B1_54	= valB1_54,				\
-	.B1_55	= valB1_55,				\
-	.B1_56	= valB1_56,				\
-	.B1_57	= valB1_57,				\
-	.B1_58	= valB1_58,				\
-	.B1_59	= valB1_59,				\
-	.B1_60	= valB1_60,				\
-	.B1_61	= valB1_61,				\
-	.B1_62	= valB1_62,				\
-	.B1_63	= valB1_63,	/* 63 */	\
-	.B2_0	= valB2_0,	/* 2-bit */	\
-	.B2_1	= valB2_1,	/* 65 */	\
-	.B2_2	= valB2_2,				\
-	.B2_3	= valB2_3,				\
-	.B2_4	= valB2_4,				\
-	.B2_5	= valB2_5,				\
-	.B2_6	= valB2_6,				\
-	.B2_7	= valB2_7,				\
-	.B2_8	= valB2_8,				\
-	.B2_9	= valB2_9,				\
-	.B2_10	= valB2_10,				\
-	.B2_11	= valB2_11,				\
-	.B2_12	= valB2_12,				\
-	.B2_13	= valB2_13,				\
-	.B2_14	= valB2_14,				\
-	.B2_15	= valB2_15,				\
-	.B2_16	= valB2_16,				\
-	.B2_17	= valB2_17,				\
-	.B2_18	= valB2_18,				\
-	.B2_19	= valB2_19,				\
-	.B2_20	= valB2_20,				\
-	.B2_21	= valB2_21,				\
-	.B2_22	= valB2_22,				\
-	.B2_23	= valB2_23,				\
-	.B2_24	= valB2_24,				\
-	.B2_25	= valB2_25,				\
-	.B2_26	= valB2_26,				\
-	.B2_27	= valB2_27,				\
-	.B2_28	= valB2_28,				\
-	.B2_29	= valB2_29,				\
-	.B2_30	= valB2_30,				\
-	.B2_31	= valB2_31,	/* 95 */	\
-	.B3_0	= valB3_0,	/* 3-bit */	\
-	.B3_1	= valB3_1,	/* 97 */	\
-	.B3_2	= valB3_2,				\
-	.B3_3	= valB3_3,				\
-	.B3_4	= valB3_4,				\
-	.B3_5	= valB3_5,				\
-	.B3_6	= valB3_6,				\
-	.B3_7	= valB3_7,				\
-	.B3_8	= valB3_8,				\
-	.B3_9	= valB3_9,				\
-	.B3_10	= valB3_10,				\
-	.B3_11	= valB3_11,				\
-	.B3_12	= valB3_12,				\
-	.B3_13	= valB3_13,				\
-	.B3_14	= valB3_14,				\
-	.B3_15	= valB3_15,				\
-	.B3_16	= valB3_16,				\
-	.B3_17	= valB3_17,				\
-	.B3_18	= valB3_18,				\
-	.B3_19	= valB3_19,				\
-	.B3_20	= valB3_20,	/* 116 */	\
-	.B4_0	= valB4_0,	/* 4-bit */	\
-	.B4_1	= valB4_1,	/* 118 */	\
-	.B4_2	= valB4_2,				\
-	.B4_3	= valB4_3,				\
-	.B4_4	= valB4_4,				\
-	.B4_5	= valB4_5,				\
-	.B4_6	= valB4_6,				\
-	.B4_7	= valB4_7,				\
-	.B4_8	= valB4_8,				\
-	.B4_9	= valB4_9,				\
-	.B4_10	= valB4_10,				\
-	.B4_11	= valB4_11,				\
-	.B4_12	= valB4_12,				\
-	.B4_13	= valB4_13,				\
-	.B4_14	= valB4_14,				\
-	.B4_15	= valB4_15,	/* 132 */	\
-	.B8_0	= valB8_0,	/* 8-bit */	\
-	.B8_1	= valB8_1,	/* 134 */	\
-	.B8_2	= valB8_2,				\
-	.B8_3	= valB8_3,				\
-	.B8_4	= valB8_4,				\
-	.B8_5	= valB8_5,				\
-	.B8_6	= valB8_6,				\
-	.B8_7	= valB8_7	/* 140 */
+#if (optB1_BYTES > 0)
+	#define	optDEF_IO_B1		.ioB1 = { optCAT(optINIT_, optB1_BYTES)(optDEF_B1) },
+#else
+	#define	optDEF_IO_B1
 #endif
+#if (optB2_BYTES > 0)
+	#define	optDEF_IO_B2		.ioB2 = { optCAT(optINIT_, optB2_BYTES)(optDEF_B2) },
+#else
+	#define	optDEF_IO_B2
+#endif
+#if (optB3_BYTES > 0)
+	#define	optDEF_IO_B3		.ioB3 = { optCAT(optINIT_, optB3_BYTES)(optDEF_B3) },
+#else
+	#define	optDEF_IO_B3
+#endif
+#if (optB4_BYTES > 0)
+	#define	optDEF_IO_B4		.ioB4 = { optCAT(optINIT_, optB4_BYTES)(optDEF_B4) },
+#else
+	#define	optDEF_IO_B4
+#endif
+#if (optB8_BYTES > 0)
+	#define	optDEF_IO_B8		.ioB8 = { optCAT(optINIT_, optB8_BYTES)(optDEF_B8) },
+#else
+	#define	optDEF_IO_B8
+#endif
+
+// Designated initialiser list for ioset_t: { iosetDEFAULTS }
+#define iosetDEFAULTS		optDEF_IO_B1 optDEF_IO_B2 optDEF_IO_B3 optDEF_IO_B4 optDEF_IO_B8
 
 #ifdef __cplusplus
 }
