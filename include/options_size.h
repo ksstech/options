@@ -131,3 +131,28 @@
 #define	optSIG					(optSIG_OF(optB1_BYTES, optB2_BYTES, optB3_BYTES, optB4_BYTES, optB8_BYTES) ^ optSIG_OF(8, 8, 8, 8, 8))
 
 #define	optFULL					(optB1_NUM == 64 && optB2_NUM == 32 && optB3_NUM == 21 && optB4_NUM == 16 && optB8_NUM == 8)
+
+#include "definitions.h"								// u8_t, DUMB_STATIC_ASSERT (common)
+
+/* 1/2/3/4/8-bit option variables, sized at compile time (above). Each width is a little-endian byte array:
+ * option n of a width occupies bits [n * width, n * width + width - 1] counted from bit 0 of byte 0 - the same bit
+ * positions the former u64_t unions gave (byte 0 = least significant byte), so the full set is byte-identical to
+ * the old layout and existing NVS blobs read unchanged. Access only through options.c (xOptionGet/xOptionSet). */
+typedef struct __attribute__((packed)) ioset_t {
+#if (optB1_BYTES > 0)
+	u8_t ioB1[optB1_BYTES];							// 1-bit options
+#endif
+#if (optB2_BYTES > 0)
+	u8_t ioB2[optB2_BYTES];							// 2-bit options
+#endif
+#if (optB3_BYTES > 0)
+	u8_t ioB3[optB3_BYTES];							// 3-bit options (top bit of the last byte unused at 21)
+#endif
+#if (optB4_BYTES > 0)
+	u8_t ioB4[optB4_BYTES];							// 4-bit options
+#endif
+#if (optB8_BYTES > 0)
+	u8_t ioB8[optB8_BYTES];							// 8-bit options
+#endif
+} ioset_t;
+DUMB_STATIC_ASSERT(sizeof(ioset_t) == optBYTES);
